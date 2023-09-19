@@ -16,7 +16,7 @@ public class NoInteractionFriendsTest {
         */
 
         input[0] = "file:///D:/DS503/FaceInPage.csv";
-        input[1] = "file:///D:/DS503/AccessLogs.csv";
+        input[1] = "file:///D:/DS503/Associates.csv";
         input[2] = "file:///D:/DS503/Project1/output";
 
         NoInteractionFriends ni = new NoInteractionFriends();

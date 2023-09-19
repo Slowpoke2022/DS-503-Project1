@@ -53,8 +53,16 @@ public class HaveFavoriteChecker {
                 throws IOException, InterruptedException {
             for (String pageID : countMap.keySet()) {
                 Integer total = countMap.get(pageID);
-                Integer unique = idMap.get(pageID).size();
-                context.write(new Text(pageID), new Text("A" + "," + total.toString() + "," + unique.toString()));
+                String unique = "";
+                Object[] temp = idMap.get(pageID).toArray();
+                for (int i = 0; i < temp.length; i++) {
+                    if (i < temp.length - 1) {
+                        unique += temp[i] + ",";
+                    } else {
+                        unique += temp[i];
+                    }
+                }
+                context.write(new Text(pageID), new Text("A" + "," + total.toString() + "," + unique));
             }
         }
     }
@@ -77,19 +85,21 @@ public class HaveFavoriteChecker {
                 throws IOException, InterruptedException {
             String name = "";
             int count = 0;
-            int unique = 0;
+            HashSet<String> unique = new HashSet<>();
             for (Text txt : values) {
                 String parts[] = txt.toString().split(",");
                 if (parts[0].equals("A")) {
                     count += Integer.parseInt(parts[1]);
-                    unique += Integer.parseInt(parts[2]);
+                    for (int i = 2; i < parts.length; i++) {
+                        unique.add(parts[i]);
+                    }
                 }
                 else if (parts[0].equals("F")) {
                     name = parts[1];
                 }
             }
-            if (count != unique) {
-                context.write(key, new Text(name + " " + Integer.toString(count) + " " + Integer.toString(unique)));
+            if (count != unique.size()) {
+                context.write(key, new Text(name + " " + Integer.toString(count) + " " + Integer.toString(unique.size())));
             }
         }
     }

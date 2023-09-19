@@ -95,7 +95,7 @@ public class CountryCounter {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "country count");
         job.setJarByClass(CountryCounter.class);
-        if (args[2].equals("optimized")) {
+        if (args[2].equals("unoptimized")) {
             job.setMapperClass(OptimizedFaceInPageMapper.class);
         } else {
             job.setMapperClass(FaceInPageMapper.class);
