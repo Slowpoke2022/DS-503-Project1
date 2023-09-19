@@ -6,7 +6,7 @@ public class OutdatedAccountCheckerTest {
 
     @Test
     public void debug() throws Exception {
-        String[] input = new String[2];
+        String[] input = new String[3];
 
         /*
         1. put the data.txt into a folder in your pc
@@ -15,8 +15,9 @@ public class OutdatedAccountCheckerTest {
             mac or linux: update the path like "file:///Users/.../projectDirectory/data.txt"
         */
 
-        input[0] = "file:///D:/DS503/AccessLogs.csv";
-        input[1] = "file:///D:/DS503/Project1/output";
+        input[0] = "file:///D:/DS503/FaceInPage.csv";
+        input[1] = "file:///D:/DS503/AccessLogs.csv";
+        input[2] = "file:///D:/DS503/Project1/output";
 
         OutdatedAccountChecker oc = new OutdatedAccountChecker();
         oc.debug(input);

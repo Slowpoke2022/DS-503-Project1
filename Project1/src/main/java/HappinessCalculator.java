@@ -87,7 +87,7 @@ public class HappinessCalculator {
 
     public void debug(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "top ten");
+        Job job = Job.getInstance(conf, "happiness calculator");
         job.setJarByClass(HappinessCalculator.class);
         job.setReducerClass(ReduceJoinReducer.class);
         job.setOutputKeyClass(Text.class);
@@ -101,7 +101,7 @@ public class HappinessCalculator {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "top ten");
+        Job job = Job.getInstance(conf, "happiness calculator");
         job.setJarByClass(HappinessCalculator.class);
         job.setReducerClass(ReduceJoinReducer.class);
         job.setOutputKeyClass(Text.class);
