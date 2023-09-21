@@ -6,7 +6,7 @@ public class MorePopularThanAverageTest {
 
     @Test
     public void debug() throws Exception {
-        String[] input = new String[3];
+        String[] input = new String[4];
 
         /*
         1. put the data.txt into a folder in your pc
@@ -18,6 +18,7 @@ public class MorePopularThanAverageTest {
         input[0] = "file:///D:/DS503/FaceInPage.csv";
         input[1] = "file:///D:/DS503/Associates.csv";
         input[2] = "file:///D:/DS503/Project1/output";
+        input[3] = "optimized";
 
         MorePopularThanAverage mp = new MorePopularThanAverage();
         mp.debug(input);

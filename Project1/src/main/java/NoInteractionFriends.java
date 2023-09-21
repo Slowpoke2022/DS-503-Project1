@@ -132,6 +132,7 @@ public class NoInteractionFriends {
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "no interact");
         job.setJarByClass(NoInteractionFriends.class);
@@ -143,10 +144,14 @@ public class NoInteractionFriends {
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
         MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "no interact");
         job.setJarByClass(NoInteractionFriends.class);
@@ -158,6 +163,9 @@ public class NoInteractionFriends {
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
         MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 }

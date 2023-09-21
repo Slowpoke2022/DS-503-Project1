@@ -13,7 +13,21 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class OutdatedAccountChecker {
 
-    public static class AccessLogsMapper
+    public static class AccessLogsMapper1
+            extends Mapper<Object, Text, Text, Text> {
+
+        public void map(Object key, Text value, Context context
+        ) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] fields = line.split(",");
+            String pageID = fields[1];
+            Integer access = Integer.parseInt(fields[4]);
+            access = access / (24 * 60);
+            context.write(new Text(pageID), new Text("A" + "," + access));
+        }
+    }
+
+    public static class AccessLogsMapper2
             extends Mapper<Object, Text, Text, Text>{
         private Map<String, Integer> accessMap;
 
@@ -62,6 +76,16 @@ public class OutdatedAccountChecker {
     public static class ReduceJoinReducer
             extends Reducer <Text, Text, Text, Text> {
 
+        private Map<String, Integer> accessMap;
+        private Map<String, String> dataMap;
+
+        @Override
+        protected void setup(Context context)
+                throws IOException, InterruptedException {
+            accessMap = new HashMap<>();
+            dataMap = new HashMap<>();
+        }
+
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
             String name = "";
@@ -75,13 +99,25 @@ public class OutdatedAccountChecker {
                     name = parts[1];
                 }
             }
-            if (access > 90) {
-                context.write(key, new Text(name + " " + access));
+            accessMap.put(key.toString(), access);
+            dataMap.put(key.toString(), name);
+        }
+
+        @Override
+        protected void cleanup(Context context)
+                throws IOException, InterruptedException {
+            for (String pageID : accessMap.keySet()) {
+                String name = dataMap.get(pageID);
+                Integer last_access = accessMap.get(pageID);
+                if (last_access > 90) {
+                    context.write(new Text(pageID), new Text(name + " " + last_access));
+                }
             }
         }
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "outdated checker");
         job.setJarByClass(OutdatedAccountChecker.class);
@@ -90,12 +126,20 @@ public class OutdatedAccountChecker {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "outdated checker");
         job.setJarByClass(OutdatedAccountChecker.class);
@@ -104,8 +148,15 @@ public class OutdatedAccountChecker {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 }

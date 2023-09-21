@@ -13,7 +13,21 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class MorePopularThanAverage {
 
-    public static class AssociatesMapper
+    public static class AssociatesMapper1
+            extends Mapper<Object, Text, Text, Text>{
+
+        public void map(Object key, Text value, Context context
+        ) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] fields = line.split(",");
+            String personA = fields[1];
+            String personB = fields[2];
+            context.write(new Text(personA), new Text("A" + "," + "1"));
+            context.write(new Text(personB), new Text("A" + "," + "1"));
+        }
+    }
+
+    public static class AssociatesMapper2
             extends Mapper<Object, Text, Text, Text>{
         private Map<String, Integer> countMap;
 
@@ -71,7 +85,8 @@ public class MorePopularThanAverage {
 
         double total;
         int n;
-        private Map<String, String> countMap;
+        private Map<String, Integer> countMap;
+        private Map<String, String> dataMap;
 
         @Override
         protected void setup(Context context)
@@ -79,6 +94,7 @@ public class MorePopularThanAverage {
             total = 0.0;
             n = 0;
             countMap = new HashMap<>();
+            dataMap = new HashMap<>();
         }
 
         public void reduce(Text key, Iterable<Text> values, Context context)
@@ -89,14 +105,15 @@ public class MorePopularThanAverage {
                 String parts[] = txt.toString().split(",");
                 if (parts[0].equals("A")) {
                     count += Integer.parseInt(parts[1]);
-                    total += count;
                 }
                 else if (parts[0].equals("F")) {
                     name = parts[1];
                 }
             }
             n += 1;
-            countMap.put(key.toString(), name + "," + Integer.toString(count));
+            total += count;
+            countMap.put(key.toString(), count);
+            dataMap.put(key.toString(), name);
         }
 
         @Override
@@ -106,15 +123,17 @@ public class MorePopularThanAverage {
             String average_val = String.format("%f", average);
             context.write(new Text("average"), new Text(average_val));
             for (String pageID : countMap.keySet()) {
-                String[] data = countMap.get(pageID).split(",");
-                if (Double.parseDouble(data[1]) > average) {
-                    context.write(new Text(pageID), new Text(data[0] + " " + data[1]));
+                String name = dataMap.get(pageID);
+                Integer count = countMap.get(pageID);
+                if (count > average) {
+                    context.write(new Text(pageID), new Text(name + " " + count));
                 }
             }
         }
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "more popular");
         job.setJarByClass(MorePopularThanAverage.class);
@@ -123,12 +142,20 @@ public class MorePopularThanAverage {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "more popular");
         job.setJarByClass(MorePopularThanAverage.class);
@@ -137,8 +164,15 @@ public class MorePopularThanAverage {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 }

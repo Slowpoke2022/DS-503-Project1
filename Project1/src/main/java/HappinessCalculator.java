@@ -14,7 +14,22 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class HappinessCalculator {
 
-    public static class AssociatesMapper
+
+    public static class AssociatesMapper1
+            extends Mapper<Object, Text, Text, Text>{
+
+        public void map(Object key, Text value, Context context
+        ) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] fields = line.split(",");
+            String personA = fields[1];
+            String personB = fields[2];
+            context.write(new Text(personA), new Text("A" + "," + "1"));
+            context.write(new Text(personB), new Text("A" + "," + "1"));
+        }
+    }
+
+    public static class AssociatesMapper2
             extends Mapper<Object, Text, Text, Text>{
         private Map<String, Integer> countMap;
 
@@ -86,6 +101,7 @@ public class HappinessCalculator {
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "happiness calculator");
         job.setJarByClass(HappinessCalculator.class);
@@ -94,12 +110,20 @@ public class HappinessCalculator {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(1);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "happiness calculator");
         job.setJarByClass(HappinessCalculator.class);
@@ -108,8 +132,15 @@ public class HappinessCalculator {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(1);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AssociatesMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 }

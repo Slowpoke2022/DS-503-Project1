@@ -13,7 +13,22 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class HaveFavoriteChecker {
 
-    public static class AccessLogsMapper
+
+    public static class AccessLogsMapper1
+            extends Mapper<Object, Text, Text, Text> {
+
+        public void map(Object key, Text value, Context context
+        ) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] fields = line.split(",");
+            String accessor = fields[1];
+            String accessed = fields[2];
+            context.write(new Text(accessor), new Text("A" + "," + "1" + "," + accessed));
+        }
+
+    }
+
+    public static class AccessLogsMapper2
             extends Mapper<Object, Text, Text, Text>{
         private Map<String, Integer> countMap;
         private Map<String, HashSet<String>> idMap;
@@ -81,6 +96,7 @@ public class HaveFavoriteChecker {
 
     public static class ReduceJoinReducer
             extends Reducer <Text, Text, Text, Text> {
+
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
             String name = "";
@@ -105,6 +121,7 @@ public class HaveFavoriteChecker {
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "favorite checker");
         job.setJarByClass(HaveFavoriteChecker.class);
@@ -113,9 +130,16 @@ public class HaveFavoriteChecker {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(1);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
@@ -127,7 +151,11 @@ public class HaveFavoriteChecker {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(1);
         MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, FaceInPageMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper.class);
+        if (args[3].equals("optimized")) {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper2.class);
+        } else {
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, AccessLogsMapper1.class);
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[2]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }

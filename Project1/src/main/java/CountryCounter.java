@@ -13,8 +13,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class CountryCounter {
 
-    public static class FaceInPageMapper
+    public static class FaceInPageMapper1
             extends Mapper<Object, Text, Text, IntWritable>{
+
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
             String line = value.toString();
@@ -23,7 +24,6 @@ public class CountryCounter {
             context.write(new Text(country), new IntWritable(1));
         }
     }
-
 
     public static class IntSumReducer
             extends Reducer<Text, IntWritable, Text, IntWritable> {
@@ -41,7 +41,7 @@ public class CountryCounter {
         }
     }
 
-    public static class OptimizedFaceInPageMapper
+    public static class FaceInPageMapper2
             extends Mapper<Object, Text, Text, IntWritable>{
         private Map<String, Integer> countMap;
 
@@ -75,36 +75,44 @@ public class CountryCounter {
     }
 
     public void debug(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "country count");
         job.setJarByClass(CountryCounter.class);
         if (args[2].equals("optimized")) {
-            job.setMapperClass(OptimizedFaceInPageMapper.class);
+            job.setMapperClass(FaceInPageMapper2.class);
         } else {
-            job.setMapperClass(FaceInPageMapper.class);
+            job.setMapperClass(FaceInPageMapper1.class);
             job.setReducerClass(IntSumReducer.class);
         }
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "country count");
         job.setJarByClass(CountryCounter.class);
-        if (args[2].equals("unoptimized")) {
-            job.setMapperClass(OptimizedFaceInPageMapper.class);
+        if (args[2].equals("optimized")) {
+            job.setMapperClass(FaceInPageMapper2.class);
         } else {
-            job.setMapperClass(FaceInPageMapper.class);
+            job.setMapperClass(FaceInPageMapper1.class);
             job.setReducerClass(IntSumReducer.class);
         }
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
+        long end = System.currentTimeMillis();
+        String elapsed = String.format("%.2f", (end - start) * 0.001);
+        System.out.println("Elapsed Time: " + elapsed + "s");
     }
 }
