@@ -15,7 +15,8 @@ public class CountryCounterTest {
             mac or linux: update the path like "file:///Users/.../projectDirectory/data.txt"
         */
 
-        input[0] = "file:///D:/DS503/FaceInPage.csv";
+        // input[0] = "file:///D:/DS503/FaceInPage.csv";
+        input[0] = "hdfs://localhost:9000/project1/FaceInPage.csv";
         input[1] = "file:///D:/DS503/Project1/output";
         input[2] = "optimized";
 

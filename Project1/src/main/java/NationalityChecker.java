@@ -26,11 +26,12 @@ public class NationalityChecker {
         ) throws IOException, InterruptedException {
             String line = value.toString();
             String[] fields = line.split(",");
+            String pageID = fields[0];
             String name = fields[1];
             String nationality = fields[2];
             String hobby = fields[4];
             if (nationality.equals(filter)) {
-                context.write(new Text(name), new Text(hobby));
+                context.write(new Text(pageID), new Text(name + " " +hobby));
             }
         }
     }

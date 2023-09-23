@@ -84,6 +84,7 @@ public class HaveFavoriteChecker {
 
     public static class FaceInPageMapper
             extends Mapper<Object, Text, Text, Text>{
+
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
             String line = value.toString();
@@ -106,8 +107,12 @@ public class HaveFavoriteChecker {
                 String parts[] = txt.toString().split(",");
                 if (parts[0].equals("A")) {
                     count += Integer.parseInt(parts[1]);
-                    for (int i = 2; i < parts.length; i++) {
-                        unique.add(parts[i]);
+                    if (parts.length == 2) {
+                        unique.add(parts[2]);
+                    } else {
+                        for (int i = 2; i < parts.length; i++) {
+                            unique.add(parts[i]);
+                        }
                     }
                 }
                 else if (parts[0].equals("F")) {

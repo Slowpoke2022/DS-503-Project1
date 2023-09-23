@@ -79,14 +79,14 @@ public class CountryCounter {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "country count");
         job.setJarByClass(CountryCounter.class);
-        if (args[2].equals("optimized")) {
-            job.setMapperClass(FaceInPageMapper2.class);
-        } else {
-            job.setMapperClass(FaceInPageMapper1.class);
-            job.setReducerClass(IntSumReducer.class);
-        }
+        job.setMapperClass(FaceInPageMapper1.class);
+        job.setReducerClass(IntSumReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+        job.setNumReduceTasks(1);
+        if (args[2].equals("optimized")) {
+            job.setCombinerClass(IntSumReducer.class);
+        }
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         job.waitForCompletion(true);
@@ -100,14 +100,16 @@ public class CountryCounter {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "country count");
         job.setJarByClass(CountryCounter.class);
+        job.setMapperClass(FaceInPageMapper1.class);
+        job.setReducerClass(IntSumReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        job.setNumReduceTasks(1);
         if (args[2].equals("optimized")) {
             job.setMapperClass(FaceInPageMapper2.class);
         } else {
             job.setMapperClass(FaceInPageMapper1.class);
-            job.setReducerClass(IntSumReducer.class);
         }
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         job.waitForCompletion(true);
